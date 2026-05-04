@@ -5,6 +5,10 @@ import ProtectedRoute from './shared/components/ProtectedRoute'
 import Dashboard from './admin/pages/Dashboard'
 import Students from './admin/pages/Students'
 import AddStudent from './admin/pages/AddStudent'
+import Teachers from './admin/pages/Teachers'
+import AddTeacher from './admin/pages/AddTeacher'
+import Classes from './admin/pages/Classes'
+import AddClass from './admin/pages/AddClass'
 
 function App() {
   return (
@@ -22,6 +26,10 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="students" element={<Students />} />
           <Route path="students/add" element={<AddStudent />} />
+          <Route path="teachers" element={<Teachers />} />
+          <Route path="teachers/add" element={<AddTeacher />} />
+          <Route path="classes" element={<Classes />} />
+          <Route path="classes/add" element={<AddClass />} />
         </Route>
 
       </Routes>
