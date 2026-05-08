@@ -56,7 +56,7 @@ const Dashboard = () => {
     { label: 'Total Students',  value: stats.students, icon: <MdPeople />,       color: 'bg-blue-500',   delay: 0 },
     { label: 'Total Teachers',  value: stats.teachers, icon: <MdSchool />,       color: 'bg-green-500',  delay: 0.1 },
     { label: 'Total Classes',   value: stats.classes,  icon: <MdClass />,        color: 'bg-purple-500', delay: 0.2 },
-    { label: 'Fees Collected',  value: stats.fees,     icon: <MdAttachMoney />,  color: 'bg-yellow-500', delay: 0.3 },
+    { label: 'Fees Collected',  value: stats.fees,     icon: '₦',  color: 'bg-yellow-500', delay: 0.3 },
   ]
 
   const quickActions = [

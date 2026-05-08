@@ -9,6 +9,7 @@ import {
   query,
   orderBy,
   limit,
+  where,
   serverTimestamp,
 } from 'firebase/firestore'
 import { db } from './firebase.config'
@@ -67,4 +68,42 @@ export const getRecentStudents = async () => {
   )
   const snapshot = await getDocs(q)
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+}
+
+// Check if attendance already exists for a class on a specific date
+export const getAttendanceByClassAndDate = async (className, date) => {
+  const q = query(
+    collection(db, 'attendance'),
+    where('class', '==', className),
+    where('date', '==', date)
+  )
+  const snapshot = await getDocs(q)
+  if (snapshot.empty) return null
+  return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() }
+}
+
+// Get all attendance records for a specific class
+export const getAttendanceByClass = async (className) => {
+  const q = query(
+    collection(db, 'attendance'),
+    where('class', '==', className),
+    orderBy('date', 'desc')
+  )
+  const snapshot = await getDocs(q)
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+}
+
+// Get attendance records for a specific student
+export const getAttendanceByStudent = async (studentId) => {
+  const q = query(
+    collection(db, 'attendance'),
+    orderBy('date', 'desc')
+  )
+  const snapshot = await getDocs(q)
+  const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+
+  // Filter records that include this student
+  return records.filter(record =>
+    record.records?.some(r => r.studentId === studentId)
+  )
 }

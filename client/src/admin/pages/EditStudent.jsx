@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast, { Toaster } from 'react-hot-toast'
-import { addDocument } from '../../firebase/firestore'
+import { getDocument, updateDocument } from '../../firebase/firestore'
 import { classes, classAgeRules, validateStudentAge } from '../../utils/constant'
 import { MdArrowBack, MdCheckCircle, MdWarning, MdError, MdInfoOutline } from 'react-icons/md'
 
@@ -20,11 +20,13 @@ const schema = z.object({
   address:     z.string().min(1, 'Address is required'),
 })
 
-const AddStudent = () => {
-  const [loading, setLoading]           = useState(false)
+const EditStudent = () => {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const [loading, setLoading]             = useState(false)
+  const [fetching, setFetching]           = useState(true)
   const [isSpecialCase, setIsSpecialCase] = useState(false)
   const [ageValidation, setAgeValidation] = useState(null)
-  const navigate = useNavigate()
 
   const { register, handleSubmit, watch, formState: { errors }, reset } = useForm({
     resolver: zodResolver(schema)
@@ -33,7 +35,26 @@ const AddStudent = () => {
   const watchedDob   = watch('dateOfBirth')
   const watchedClass = watch('class')
 
-  // Live age validation as they type
+  useEffect(() => {
+    const fetchStudent = async () => {
+      try {
+        const student = await getDocument('students', id)
+        if (!student) {
+          toast.error('Student not found')
+          navigate('/admin/students')
+          return
+        }
+        setIsSpecialCase(student.isSpecialCase || false)
+        reset(student)
+      } catch (error) {
+        toast.error('Failed to load student')
+      } finally {
+        setFetching(false)
+      }
+    }
+    fetchStudent()
+  }, [id])
+
   useEffect(() => {
     if (watchedDob && watchedClass) {
       const result = validateStudentAge(watchedDob, watchedClass, isSpecialCase)
@@ -44,29 +65,22 @@ const AddStudent = () => {
   }, [watchedDob, watchedClass, isSpecialCase])
 
   const onSubmit = async (data) => {
-    // Final age check before saving
     const ageCheck = validateStudentAge(data.dateOfBirth, data.class, isSpecialCase)
     if (!ageCheck.valid) {
       toast.error(ageCheck.message)
       return
     }
-
     setLoading(true)
     try {
-      await addDocument('students', {
+      await updateDocument('students', id, {
         ...data,
-        status:      'active',
         isSpecialCase,
         age: ageCheck.age,
       })
-      toast.success('Student added successfully!')
-      reset()
-      setIsSpecialCase(false)
-      setAgeValidation(null)
+      toast.success('Student updated successfully!')
       navigate('/admin/students')
     } catch (error) {
-      toast.error('Failed to add student.')
-      console.error(error)
+      toast.error('Failed to update student.')
     } finally {
       setLoading(false)
     }
@@ -77,7 +91,6 @@ const AddStudent = () => {
     rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 
     focus:ring-blue-500 transition`
 
-  // Age validation banner styles
   const ageBanner = ageValidation && {
     valid: {
       bg:   isSpecialCase ? 'bg-yellow-50 border-yellow-200' : 'bg-green-50 border-green-200',
@@ -91,6 +104,14 @@ const AddStudent = () => {
     },
   }[ageValidation.valid ? 'valid' : 'invalid']
 
+  if (fetching) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-400 text-sm">Loading student data...</p>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-3xl mx-auto">
       <Toaster position="top-right" />
@@ -100,8 +121,8 @@ const AddStudent = () => {
           <MdArrowBack size={22} />
         </button>
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Add Student</h2>
-          <p className="text-sm text-gray-500">Fill in the details below to register a new student</p>
+          <h2 className="text-2xl font-bold text-gray-800">Edit Student</h2>
+          <p className="text-sm text-gray-500">Update student information</p>
         </div>
       </div>
 
@@ -134,35 +155,32 @@ const AddStudent = () => {
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 
-          {/* Name Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-              <input {...register('firstName')} className={inputClass(errors.firstName)} placeholder="John" />
+              <input {...register('firstName')} className={inputClass(errors.firstName)} />
               {errors.firstName && <p className="text-red-500 text-xs mt-1">{errors.firstName.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-              <input {...register('lastName')} className={inputClass(errors.lastName)} placeholder="Doe" />
+              <input {...register('lastName')} className={inputClass(errors.lastName)} />
               {errors.lastName && <p className="text-red-500 text-xs mt-1">{errors.lastName.message}</p>}
             </div>
           </div>
 
-          {/* Email & Phone */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input {...register('email')} type="email" className={inputClass(errors.email)} placeholder="john@example.com" />
+              <input {...register('email')} type="email" className={inputClass(errors.email)} />
               {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-              <input {...register('phone')} className={inputClass(errors.phone)} placeholder="08012345678" />
+              <input {...register('phone')} className={inputClass(errors.phone)} />
               {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
             </div>
           </div>
 
-          {/* Class & Gender */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
@@ -183,7 +201,6 @@ const AddStudent = () => {
             </div>
           </div>
 
-          {/* DOB & Address */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
@@ -192,12 +209,12 @@ const AddStudent = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-              <input {...register('address')} className={inputClass(errors.address)} placeholder="123 Main St, Lagos" />
+              <input {...register('address')} className={inputClass(errors.address)} />
               {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address.message}</p>}
             </div>
           </div>
 
-          {/* Live Age Validation Banner */}
+          {/* Live Age Validation */}
           <AnimatePresence>
             {ageValidation && (
               <motion.div
@@ -213,37 +230,33 @@ const AddStudent = () => {
           </AnimatePresence>
 
           {/* Special Case Toggle */}
-          {/* Only show toggle if age is out of range OR already a special case */}
           {(ageValidation && !ageValidation.valid) || isSpecialCase ? (
-            <AnimatePresence>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex items-start gap-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl"
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex items-start gap-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl"
+            >
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-yellow-800">Special Case Admission</p>
+                <p className="text-xs text-yellow-600 mt-0.5">
+                  Enable for late education, gifted students, or other exceptional circumstances.
+                  Extends age limit by 4 years on each side.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSpecialCase(!isSpecialCase)}
+                className={`relative w-12 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${
+                  isSpecialCase ? 'bg-yellow-500' : 'bg-gray-300'
+                }`}
               >
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-yellow-800">Special Case Admission</p>
-                  <p className="text-xs text-yellow-600 mt-0.5">
-                    Enable this for late education, early gifted students, or other exceptional circumstances.
-                    Extends age limit by {4} years on each side.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsSpecialCase(!isSpecialCase)}
-                  className={`relative w-12 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${
-                    isSpecialCase ? 'bg-yellow-500' : 'bg-gray-300'
-                  }`}
-                >
-                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
-                    isSpecialCase ? 'translate-x-6' : 'translate-x-0'
-                  }`} />
-                </button>
-              </motion.div>
-            </AnimatePresence>
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
+                  isSpecialCase ? 'translate-x-6' : 'translate-x-0'
+                }`} />
+              </button>
+            </motion.div>
           ) : null}
 
-          {/* Buttons */}
           <div className="flex gap-3 pt-2">
             <button
               type="button"
@@ -257,7 +270,7 @@ const AddStudent = () => {
               disabled={loading}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg text-sm font-medium transition disabled:opacity-60"
             >
-              {loading ? 'Saving...' : 'Add Student'}
+              {loading ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
 
@@ -267,4 +280,4 @@ const AddStudent = () => {
   )
 }
 
-export default AddStudent
+export default EditStudent

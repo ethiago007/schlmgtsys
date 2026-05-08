@@ -1,11 +1,11 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { motion } from 'framer-motion'
 import toast, { Toaster } from 'react-hot-toast'
-import { addDocument } from '../../firebase/firestore'
+import { getDocument, updateDocument } from '../../firebase/firestore'
 import { MdArrowBack } from 'react-icons/md'
 
 const schema = z.object({
@@ -18,11 +18,10 @@ const schema = z.object({
   address:       z.string().min(1, 'Address is required'),
   qualification: z.string().min(1, 'Qualification is required'),
   employedDate:  z.string().min(1, 'Employment date is required'),
-
   dateOfBirth: z.string().min(1, 'Date of birth is required').refine((dob) => {
-    const birth    = new Date(dob)
-    const today    = new Date()
-    const age      = today.getFullYear() - birth.getFullYear()
+    const birth = new Date(dob)
+    const today = new Date()
+    const age   = today.getFullYear() - birth.getFullYear()
     const hasBirthday =
       today.getMonth() > birth.getMonth() ||
       (today.getMonth() === birth.getMonth() && today.getDate() >= birth.getDate())
@@ -38,27 +37,43 @@ const subjects = [
   'French', 'Literature', 'Further Mathematics',
 ]
 
-const AddTeacher = () => {
-  const [loading, setLoading] = useState(false)
+const EditTeacher = () => {
+  const { id } = useParams()
   const navigate = useNavigate()
+  const [loading, setLoading]   = useState(false)
+  const [fetching, setFetching] = useState(true)
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm({
     resolver: zodResolver(schema)
   })
 
+  useEffect(() => {
+    const fetchTeacher = async () => {
+      try {
+        const teacher = await getDocument('teachers', id)
+        if (!teacher) {
+          toast.error('Teacher not found')
+          navigate('/admin/teachers')
+          return
+        }
+        reset(teacher)
+      } catch (error) {
+        toast.error('Failed to load teacher')
+      } finally {
+        setFetching(false)
+      }
+    }
+    fetchTeacher()
+  }, [id])
+
   const onSubmit = async (data) => {
     setLoading(true)
     try {
-      await addDocument('teachers', {
-        ...data,
-        status: 'active',
-      })
-      toast.success('Teacher added successfully!')
-      reset()
+      await updateDocument('teachers', id, data)
+      toast.success('Teacher updated successfully!')
       navigate('/admin/teachers')
     } catch (error) {
-      toast.error('Failed to add teacher.')
-      console.error(error)
+      toast.error('Failed to update teacher.')
     } finally {
       setLoading(false)
     }
@@ -69,25 +84,28 @@ const AddTeacher = () => {
     rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 
     focus:ring-blue-500 transition`
 
+  if (fetching) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-400 text-sm">Loading teacher data...</p>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-3xl mx-auto">
       <Toaster position="top-right" />
 
-      {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <button
-          onClick={() => navigate('/admin/teachers')}
-          className="text-gray-500 hover:text-gray-800 transition"
-        >
+        <button onClick={() => navigate('/admin/teachers')} className="text-gray-500 hover:text-gray-800 transition">
           <MdArrowBack size={22} />
         </button>
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Add Teacher</h2>
-          <p className="text-sm text-gray-500">Fill in the details to register a new teacher</p>
+          <h2 className="text-2xl font-bold text-gray-800">Edit Teacher</h2>
+          <p className="text-sm text-gray-500">Update teacher information</p>
         </div>
       </div>
 
-      {/* Form */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -96,35 +114,32 @@ const AddTeacher = () => {
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 
-          {/* Name Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-              <input {...register('firstName')} className={inputClass(errors.firstName)} placeholder="John" />
+              <input {...register('firstName')} className={inputClass(errors.firstName)} />
               {errors.firstName && <p className="text-red-500 text-xs mt-1">{errors.firstName.message}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-              <input {...register('lastName')} className={inputClass(errors.lastName)} placeholder="Doe" />
+              <input {...register('lastName')} className={inputClass(errors.lastName)} />
               {errors.lastName && <p className="text-red-500 text-xs mt-1">{errors.lastName.message}</p>}
             </div>
           </div>
 
-          {/* Email & Phone */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input {...register('email')} type="email" className={inputClass(errors.email)} placeholder="teacher@school.com" />
+              <input {...register('email')} type="email" className={inputClass(errors.email)} />
               {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-              <input {...register('phone')} className={inputClass(errors.phone)} placeholder="08012345678" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <input {...register('phone')} className={inputClass(errors.phone)} />
               {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
             </div>
           </div>
 
-          {/* Subject & Gender */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
@@ -145,7 +160,6 @@ const AddTeacher = () => {
             </div>
           </div>
 
-          {/* Qualification & Employed Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Qualification</label>
@@ -167,7 +181,6 @@ const AddTeacher = () => {
             </div>
           </div>
 
-          {/* DOB & Address */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
@@ -176,12 +189,11 @@ const AddTeacher = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-              <input {...register('address')} className={inputClass(errors.address)} placeholder="123 Main St, Lagos" />
+              <input {...register('address')} className={inputClass(errors.address)} />
               {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address.message}</p>}
             </div>
           </div>
 
-          {/* Buttons */}
           <div className="flex gap-3 pt-2">
             <button
               type="button"
@@ -195,7 +207,7 @@ const AddTeacher = () => {
               disabled={loading}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg text-sm font-medium transition disabled:opacity-60"
             >
-              {loading ? 'Saving...' : 'Add Teacher'}
+              {loading ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
 
@@ -205,4 +217,4 @@ const AddTeacher = () => {
   )
 }
 
-export default AddTeacher
+export default EditTeacher
