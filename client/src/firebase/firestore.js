@@ -107,3 +107,24 @@ export const getAttendanceByStudent = async (studentId) => {
     record.records?.some(r => r.studentId === studentId)
   )
 }
+
+// Get grades for a specific student
+export const getGradesByStudent = async (studentId) => {
+  const q        = query(collection(db, 'grades'), where('studentId', '==', studentId))
+  const snapshot = await getDocs(q)
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+}
+
+// Get fees for a specific student
+export const getFeesByStudent = async (studentId) => {
+  const q        = query(collection(db, 'fees'), where('studentId', '==', studentId))
+  const snapshot = await getDocs(q)
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+}
+
+// Get students by class
+export const getStudentsByClass = async (className) => {
+  const q        = query(collection(db, 'students'), where('class', '==', className))
+  const snapshot = await getDocs(q)
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+}

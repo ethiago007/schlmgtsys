@@ -27,26 +27,29 @@ const Login = () => {
   if (user && role === 'student') navigate('/portal')
 
   const onSubmit = async (data) => {
-    setLoading(true)
-    try {
-      const loggedInUser = await loginUser(data.email, data.password)
-      const userRole = await getUserRole(loggedInUser.uid)
+  setLoading(true)
+  try {
+    const loggedInUser = await loginUser(data.email, data.password)
+    const userRole     = await getUserRole(loggedInUser.uid)
 
-      if (userRole === 'admin') {
-        toast.success('Welcome, Admin!')
-        navigate('/admin')
-      } else if (userRole === 'student') {
-        toast.success('Welcome back!')
-        navigate('/portal')
-      } else {
-        toast.error('No role assigned to this account.')
-      }
-    } catch (error) {
-      toast.error('Invalid email or password.')
-    } finally {
-      setLoading(false)
+    if (userRole === 'admin') {
+      toast.success('Welcome, Admin!')
+      navigate('/admin')
+    } else if (userRole === 'student') {
+      toast.success('Welcome back!')
+      navigate('/portal')
+    } else if (userRole === 'teacher') {
+      toast.success('Welcome, Teacher!')
+      navigate('/teacher')       // ← add this
+    } else {
+      toast.error('No role assigned to this account.')
     }
+  } catch (error) {
+    toast.error('Invalid email or password.')
+  } finally {
+    setLoading(false)
   }
+}
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">

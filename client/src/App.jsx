@@ -20,6 +20,19 @@ import Attendance from "./admin/pages/Attendance";
 import Fees from "./admin/pages/Fees";
 import AddFee from "./admin/pages/AddFee";
 import EditFee from "./admin/pages/EditFee";
+import PortalLayout from "./client/components/PortalLayout";
+import Home from "./client/pages/Home";
+import MyGrades from "./client/pages/MyGrades";
+import MyAttendance from "./client/pages/MyAttendance";
+import MyFees from "./client/pages/MyFees";
+import Profile from "./client/pages/Profiles";
+import TeacherLayout from "./teacher/components/TeacherLayout";
+import TeacherHome from "./teacher/pages/Home";
+import MyClass from "./teacher/pages/MyClass";
+import TeacherGrades from "./teacher/pages/TeacherGrades";
+import AddTeacherGrade from "./teacher/pages/AddTeacherGrade";
+import TeacherAttendance from "./teacher/pages/TeacherAttendance";
+import TeacherProfile from "./teacher/pages/TeacherProfile";
 
 function App() {
   return (
@@ -54,6 +67,37 @@ function App() {
           <Route path="fees" element={<Fees />} />
           <Route path="fees/add" element={<AddFee />} />
           <Route path="fees/edit/:id" element={<EditFee />} />
+        </Route>
+
+        <Route
+          path="/portal"
+          element={
+            <ProtectedRoute role="student">
+              <PortalLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Home />} />
+          <Route path="grades" element={<MyGrades />} />
+          <Route path="attendance" element={<MyAttendance />} />
+          <Route path="fees" element={<MyFees />} />
+          <Route path="profile" element={<Profile />} />
+        </Route>
+
+        <Route
+          path="/teacher"
+          element={
+            <ProtectedRoute role="teacher">
+              <TeacherLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<TeacherHome />} />
+          <Route path="class" element={<MyClass />} />
+          <Route path="grades" element={<TeacherGrades />} />
+          <Route path="grades/add" element={<AddTeacherGrade />} />
+          <Route path="attendance" element={<TeacherAttendance />} />
+          <Route path="profile" element={<TeacherProfile />} />
         </Route>
       </Routes>
     </BrowserRouter>

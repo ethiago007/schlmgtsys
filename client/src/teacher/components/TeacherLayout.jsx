@@ -6,9 +6,10 @@ import { logoutUser } from '../../firebase/auth'
 import toast, { Toaster } from 'react-hot-toast'
 import {
   MdDashboard,
+  MdPeople,
   MdGrade,
-  MdAttachMoney,
   MdEventNote,
+  MdMessage,
   MdPerson,
   MdLogout,
   MdMenu,
@@ -16,16 +17,17 @@ import {
 } from 'react-icons/md'
 
 const navItems = [
-  { label: 'Home',       icon: <MdDashboard size={20} />, path: '/portal' },
-  { label: 'My Grades',  icon: <MdGrade size={20} />,     path: '/portal/grades' },
-  { label: 'Attendance', icon: <MdEventNote size={20} />, path: '/portal/attendance' },
-  { label: 'My Fees',    icon: '<MdAttachMoney size={20}/>', path: '/portal/fees' },
-  { label: 'Profile',    icon: <MdPerson size={20} />,    path: '/portal/profile' },
+  { label: 'Home',       icon: <MdDashboard size={20} />, path: '/teacher' },
+  { label: 'My Class',   icon: <MdPeople size={20} />,    path: '/teacher/class' },
+  { label: 'Grades',     icon: <MdGrade size={20} />,     path: '/teacher/grades' },
+  { label: 'Attendance', icon: <MdEventNote size={20} />, path: '/teacher/attendance' },
+  { label: 'Messages',   icon: <MdMessage size={20} />,   path: '/teacher/messages' },
+  { label: 'Profile',    icon: <MdPerson size={20} />,    path: '/teacher/profile' },
 ]
 
-const PortalLayout = () => {
-  const { user } = useAuth()
-  const navigate  = useNavigate()
+const TeacherLayout = () => {
+  const { user, teacher } = useAuth()
+  const navigate           = useNavigate()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = async () => {
@@ -42,7 +44,7 @@ const PortalLayout = () => {
     <div className="min-h-screen bg-gray-100">
       <Toaster position="top-right" />
 
-      {/* Top Navbar */}
+      {/* Navbar */}
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-30">
 
         {/* Logo */}
@@ -53,9 +55,9 @@ const PortalLayout = () => {
           >
             {mobileMenuOpen ? <MdClose size={24} /> : <MdMenu size={24} />}
           </button>
-          <h1 className="text-lg font-bold text-blue-700">🏫 SchoolMS</h1>
-          <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full hidden sm:block">
-            Student Portal
+          <h1 className="text-lg font-bold text-green-700">🏫 SchoolMS</h1>
+          <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full hidden sm:block">
+            Teacher Portal
           </span>
         </div>
 
@@ -65,11 +67,11 @@ const PortalLayout = () => {
             <NavLink
               key={item.path}
               to={item.path}
-              end={item.path === '/portal'}
+              end={item.path === '/teacher'}
               className={({ isActive }) =>
                 `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition ${
                   isActive
-                    ? 'bg-blue-50 text-blue-600'
+                    ? 'bg-green-50 text-green-600'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`
               }
@@ -82,8 +84,14 @@ const PortalLayout = () => {
 
         {/* User + Logout */}
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-bold flex items-center justify-center">
-            {user?.email?.charAt(0).toUpperCase()}
+          <div className="hidden sm:block text-right">
+            <p className="text-xs font-semibold text-gray-800">
+              {teacher?.firstName} {teacher?.lastName}
+            </p>
+            <p className="text-xs text-gray-400">{teacher?.subject}</p>
+          </div>
+          <div className="w-8 h-8 rounded-full bg-green-600 text-white text-sm font-bold flex items-center justify-center">
+            {teacher?.firstName?.charAt(0)}{teacher?.lastName?.charAt(0)}
           </div>
           <button
             onClick={handleLogout}
@@ -108,12 +116,12 @@ const PortalLayout = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
-                end={item.path === '/portal'}
+                end={item.path === '/teacher'}
                 onClick={() => setMobileMenuOpen(false)}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition ${
                     isActive
-                      ? 'bg-blue-50 text-blue-600'
+                      ? 'bg-green-50 text-green-600'
                       : 'text-gray-600 hover:bg-gray-100'
                   }`
                 }
@@ -126,7 +134,7 @@ const PortalLayout = () => {
         )}
       </AnimatePresence>
 
-      {/* Page Content */}
+      {/* Content */}
       <main className="max-w-5xl mx-auto px-4 py-8">
         <Outlet />
       </main>
@@ -134,4 +142,4 @@ const PortalLayout = () => {
   )
 }
 
-export default PortalLayout
+export default TeacherLayout
