@@ -1,7 +1,10 @@
-require('dotenv').config()
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config()
+}
+
 require('express-async-errors')
 
-const express  = require('express')
+const express = require('express')
 const cors     = require('cors')
 const helmet   = require('helmet')
 const morgan   = require('morgan')
