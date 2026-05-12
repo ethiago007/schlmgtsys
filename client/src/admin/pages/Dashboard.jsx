@@ -15,6 +15,7 @@ import {
   SkeletonStatCard,
   SkeletonCard,
 } from "../../shared/components/Skeleton";
+import { migrateMessages } from '../../utils/migrateMessages'
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -26,6 +27,10 @@ const Dashboard = () => {
   });
   const [recentStudents, setRecentStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
+
+  useEffect(() => {
+  migrateMessages()
+}, [])
 
   useEffect(() => {
     const fetchStats = async () => {
