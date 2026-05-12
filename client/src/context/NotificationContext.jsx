@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase/firebase.config";
 import { useAuth } from "./AuthContext";
@@ -10,6 +10,7 @@ export const NotificationProvider = ({ children }) => {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [unreadAnnouncements, setUnreadAnnouncements] = useState(0);
   const [unseenAnnouncementIds, setUnseenAnnouncementIds] = useState([]);
+  const unseenIdsRef = useRef([])
 
   useEffect(() => {
     if (!user || !role) return;
@@ -74,7 +75,8 @@ export const NotificationProvider = ({ children }) => {
           );
           const unseen = ids.filter((id) => !seen.includes(id));
           setUnreadAnnouncements(unseen.length);
-          setUnseenAnnouncementIds(unseen);
+          setUnseenAnnouncementIds(unseen)
+unseenIdsRef.current = unseen
         },
       );
       unsubs.push(annUnsub);
@@ -146,5 +148,18 @@ export const NotificationProvider = ({ children }) => {
     </NotificationContext.Provider>
   );
 };
+
+const currentUnseen = unseenIdsRef.current
+  if (currentUnseen.length === 0) return
+
+  const key     = `seen_ann_${userId}`
+  const seen    = JSON.parse(localStorage.getItem(key) || '[]')
+  const updated = [...new Set([...seen, ...currentUnseen])]
+
+  localStorage.setItem(key, JSON.stringify(updated))
+  setUnreadAnnouncements(0)
+  setUnseenAnnouncementIds([])
+  unseenIdsRef.current = []
+
 
 export const useNotifications = () => useContext(NotificationContext);

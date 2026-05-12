@@ -79,54 +79,58 @@ const ComposeModal = ({ onClose, onSent, students, teachers, adminUser }) => {
 
   // Inside ComposeModal — update handleSend to include recipientName
   const handleSend = async () => {
-    if (!form.subject.trim() || !form.message.trim()) {
-      return toast.error("Subject and message are required");
-    }
-    if (mode === "direct" && !form.recipientId) {
-      return toast.error("Please select a recipient");
-    }
+  if (!form.subject.trim() || !form.message.trim()) {
+    return toast.error('Subject and message are required')
+  }
+  if (mode === 'direct' && !form.recipientId) {
+    return toast.error('Please select a recipient')
+  }
 
-    setSending(true);
-    try {
-      if (mode === "announcement") {
-        await sendAnnouncement({
-          subject: form.subject.trim(),
-          message: form.message.trim(),
-          audience: form.audience,
-          senderName: "Admin",
-          senderRole: "admin",
-          senderId: adminUser?.uid,
-        });
-        toast.success("Announcement sent!");
-      } else {
-        // Find recipient name to store
-        const allPeople = [...students, ...teachers];
-        const recipient = allPeople.find((p) => p.id === form.recipientId);
-        const recipientName = recipient
-          ? `${recipient.firstName} ${recipient.lastName}`
-          : "Unknown";
+  setSending(true)
+  try {
+    if (mode === 'announcement') {
+      await sendAnnouncement({
+        subject:    form.subject.trim(),
+        message:    form.message.trim(),
+        audience:   form.audience,
+        senderName: 'Admin',
+        senderRole: 'admin',
+        senderId:   adminUser?.uid,
+      })
+      toast.success('Announcement sent!')
+    } else {
+      // Find recipient name from students or teachers list
+      const allPeople     = [...students, ...teachers]
+      const recipient     = allPeople.find(p => p.id === form.recipientId)
+      const recipientName = recipient
+        ? `${recipient.firstName} ${recipient.lastName}`
+        : form.recipientRole === 'admin'
+        ? 'Admin'
+        : 'Unknown'
 
-        await sendMessage({
-          subject: form.subject.trim(),
-          message: form.message.trim(),
-          recipientId: form.recipientId,
-          recipientRole: form.recipientRole,
-          recipientName, // ← store recipient name
-          senderId: adminUser?.uid,
-          senderName: "Admin",
-          senderRole: "admin",
-        });
-        toast.success(`Message sent to ${recipientName}!`);
-      }
-      onSent();
-      onClose();
-    } catch (error) {
-      toast.error("Failed to send");
-      console.error(error);
-    } finally {
-      setSending(false);
+      console.log('Sending to:', recipientName, form.recipientId) // ← temp log
+
+      await sendMessage({
+        subject:       form.subject.trim(),
+        message:       form.message.trim(),
+        recipientId:   form.recipientId,
+        recipientRole: form.recipientRole,
+        recipientName, // ← this must be stored
+        senderId:      adminUser?.uid,
+        senderName:    'Admin',
+        senderRole:    'admin',
+      })
+      toast.success(`Message sent to ${recipientName}!`)
     }
-  };
+    onSent()
+    onClose()
+  } catch (error) {
+    toast.error('Failed to send')
+    console.error(error)
+  } finally {
+    setSending(false)
+  }
+}
 
   const allRecipients = [
     ...students.map((s) => ({
@@ -702,57 +706,55 @@ const AdminMessages = () => {
               ))}
 
             {/* Sent Messages Tab */}
-            {tab === "sent" && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl shadow-sm overflow-hidden"
-              >
-                {sentMessages.length === 0 ? (
-                  <div className="p-10 text-center">
-                    <MdSend size={40} className="text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-400 text-sm">
-                      No sent messages yet
-                    </p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-gray-100">
-                    {sentMessages.map((message) => (
-                      <div
-                        key={message.id}
-                        className="flex items-start gap-4 p-5 hover:bg-gray-50 transition cursor-pointer"
-                        onClick={() => setActiveMessage(message)}
-                      >
-                        <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 font-bold text-sm flex items-center justify-center shrink-0">
-                          {message.recipientName?.charAt(0) || "?"}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold text-gray-800">
-                              To: {message.recipientName || message.recipientId}
-                            </p>
-                            <span className="text-xs text-gray-400 capitalize">
-                              ({message.recipientRole})
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600 truncate mt-0.5">
-                            {message.subject}
-                          </p>
-                          <p className="text-xs text-gray-400 truncate mt-0.5">
-                            {message.message}
-                          </p>
-                        </div>
-                        <div className="flex flex-col items-end gap-2 shrink-0">
-                          <p className="text-xs text-gray-400">
-                            {formatTime(message.createdAt)}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            )}
+            {/* Sent Messages Tab */}
+{tab === 'sent' && (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="bg-white rounded-2xl shadow-sm overflow-hidden"
+  >
+    {sentMessages.length === 0 ? (
+      <div className="p-10 text-center">
+        <MdSend size={40} className="text-gray-300 mx-auto mb-3" />
+        <p className="text-gray-400 text-sm">No sent messages yet</p>
+      </div>
+    ) : (
+      <div className="divide-y divide-gray-100">
+        {sentMessages.map(message => (
+          <div
+            key={message.id}
+            className="flex items-start gap-4 p-5 hover:bg-gray-50 transition cursor-pointer"
+            onClick={() => setActiveMessage(message)}
+          >
+            <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 font-bold text-sm flex items-center justify-center shrink-0">
+              {/* Use recipientName, fall back to recipientRole display */}
+              {(message.recipientName || message.recipientRole || '?').charAt(0).toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-gray-800">
+                  To: {
+                    message.recipientName ||
+                    (message.recipientId === 'admin' ? 'Admin' : null) ||
+                    `${message.recipientRole || 'Unknown'}`
+                  }
+                </p>
+                <span className="text-xs text-gray-400 capitalize">
+                  ({message.recipientRole})
+                </span>
+              </div>
+              <p className="text-sm text-gray-600 truncate mt-0.5">{message.subject}</p>
+              <p className="text-xs text-gray-400 truncate mt-0.5">{message.message}</p>
+            </div>
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <p className="text-xs text-gray-400">{formatTime(message.createdAt)}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </motion.div>
+)}
           </div>
         )}
       </motion.div>
