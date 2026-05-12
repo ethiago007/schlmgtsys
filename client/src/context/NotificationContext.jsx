@@ -149,17 +149,6 @@ unseenIdsRef.current = unseen
   );
 };
 
-const currentUnseen = unseenIdsRef.current
-  if (currentUnseen.length === 0) return
-
-  const key     = `seen_ann_${userId}`
-  const seen    = JSON.parse(localStorage.getItem(key) || '[]')
-  const updated = [...new Set([...seen, ...currentUnseen])]
-
-  localStorage.setItem(key, JSON.stringify(updated))
-  setUnreadAnnouncements(0)
-  setUnseenAnnouncementIds([])
-  unseenIdsRef.current = []
 
 
 export const useNotifications = () => useContext(NotificationContext);
