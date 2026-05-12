@@ -4,7 +4,10 @@ import { motion } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
 import { MdAdd, MdDelete, MdSearch, MdClass, MdEdit } from "react-icons/md";
 import { getCollection, deleteDocument } from "../../firebase/firestore";
-import DeleteModal from '../../shared/components/DeleteModal'
+import DeleteModal from "../../shared/components/DeleteModal";
+import Pagination from "../../shared/components/Pagination";
+import usePagination from "../../hooks/usePagination";
+import { SkeletonTable } from "../../shared/components/Skeleton";
 
 const Classes = () => {
   const [classes, setClasses] = useState([]);
@@ -43,32 +46,32 @@ const Classes = () => {
     setFiltered(results);
   }, [search, classes]);
 
-const confirmDelete = (id) => {
-  setDeleteModal({ open: true, id })
-}
+  const confirmDelete = (id) => {
+    setDeleteModal({ open: true, id });
+  };
 
   // Actually deletes when user confirms in modal
-const handleDelete = async () => {
-  const id = deleteModal.id  // ← capture it first before anything async runs
+  const handleDelete = async () => {
+    const id = deleteModal.id; // ← capture it first before anything async runs
 
-  if (!id) {
-    toast.error('No record selected')
-    return
-  }
+    if (!id) {
+      toast.error("No record selected");
+      return;
+    }
 
-  setDeletingId(id)
-  try {
-    await deleteDocument('grades', id)  // ← use captured id
-    toast.success('Grade deleted')
-    setDeleteModal({ open: false, id: null })
-    fetchGrades()
-  } catch (error) {
-    console.error('Delete error:', error.code, error.message)
-    toast.error('Failed to delete grade')
-  } finally {
-    setDeletingId(null)
-  }
-}
+    setDeletingId(id);
+    try {
+      await deleteDocument("grades", id); // ← use captured id
+      toast.success("Grade deleted");
+      setDeleteModal({ open: false, id: null });
+      fetchGrades();
+    } catch (error) {
+      console.error("Delete error:", error.code, error.message);
+      toast.error("Failed to delete grade");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   // Color per class name for the badge
   const classBadgeColor = (name) => {
@@ -82,6 +85,21 @@ const handleDelete = async () => {
     };
     return colors[name] || "bg-gray-100 text-gray-700";
   };
+
+  const {
+    currentPage,
+    totalPages,
+    paginatedData: paginatedClass,
+    setCurrentPage,
+    resetPage,
+    totalItems,
+    itemsPerPage,
+  } = usePagination(filtered, 10);
+
+  // Reset page when search changes
+  useEffect(() => {
+    resetPage();
+  }, [search]);
 
   return (
     <div className="space-y-6">
@@ -128,7 +146,7 @@ const handleDelete = async () => {
       >
         {loading ? (
           <div className="p-10 text-center text-gray-400 text-sm">
-            Loading classes...
+            <SkeletonTable rows={8} cols={7} />
           </div>
         ) : filtered.length === 0 ? (
           <div className="p-10 text-center">
@@ -155,7 +173,7 @@ const handleDelete = async () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filtered.map((cls, index) => (
+                {paginatedClass.map((cls, index) => (
                   <tr key={cls.id} className="hover:bg-gray-50 transition">
                     <td className="px-6 py-4 text-gray-400">{index + 1}</td>
 

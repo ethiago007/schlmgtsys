@@ -60,36 +60,36 @@ export const formatCurrency = (amount) => {
   }).format(amount);
 };
 
-
 // Normal age range per class + allowance for special cases
 export const classAgeRules = {
-  JSS1: { min: 9,  max: 13, label: 'JSS1 (Expected: 9–13)' },
-  JSS2: { min: 10, max: 14, label: 'JSS2 (Expected: 10–14)' },
-  JSS3: { min: 11, max: 15, label: 'JSS3 (Expected: 11–15)' },
-  SSS1: { min: 14, max: 18, label: 'SSS1 (Expected: 14–18)' },
-  SSS2: { min: 15, max: 19, label: 'SSS2 (Expected: 15–19)' },
-  SSS3: { min: 16, max: 20, label: 'SSS3 (Expected: 16–20)' },
-}
+  JSS1: { min: 9, max: 13, label: "JSS1 (Expected: 9–13)" },
+  JSS2: { min: 10, max: 14, label: "JSS2 (Expected: 10–14)" },
+  JSS3: { min: 11, max: 15, label: "JSS3 (Expected: 11–15)" },
+  SSS1: { min: 14, max: 18, label: "SSS1 (Expected: 14–18)" },
+  SSS2: { min: 15, max: 19, label: "SSS2 (Expected: 15–19)" },
+  SSS3: { min: 16, max: 20, label: "SSS3 (Expected: 16–20)" },
+};
 
 // Special case allowance — how many extra years on each side we allow
-export const SPECIAL_CASE_ALLOWANCE = 4
+export const SPECIAL_CASE_ALLOWANCE = 4;
 
 export const validateStudentAge = (dob, className, isSpecialCase = false) => {
-  if (!dob || !className) return { valid: true, message: '' }
+  if (!dob || !className) return { valid: true, message: "" };
 
-  const birth   = new Date(dob)
-  const today   = new Date()
-  let age       = today.getFullYear() - birth.getFullYear()
+  const birth = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
   const hasBirthday =
     today.getMonth() > birth.getMonth() ||
-    (today.getMonth() === birth.getMonth() && today.getDate() >= birth.getDate())
-  if (!hasBirthday) age -= 1
+    (today.getMonth() === birth.getMonth() &&
+      today.getDate() >= birth.getDate());
+  if (!hasBirthday) age -= 1;
 
-  const rule = classAgeRules[className]
-  if (!rule) return { valid: true, message: '' }
+  const rule = classAgeRules[className];
+  if (!rule) return { valid: true, message: "" };
 
-  const minAge = isSpecialCase ? rule.min - SPECIAL_CASE_ALLOWANCE : rule.min
-  const maxAge = isSpecialCase ? rule.max + SPECIAL_CASE_ALLOWANCE : rule.max
+  const minAge = isSpecialCase ? rule.min - SPECIAL_CASE_ALLOWANCE : rule.min;
+  const maxAge = isSpecialCase ? rule.max + SPECIAL_CASE_ALLOWANCE : rule.max;
 
   if (age < minAge) {
     return {
@@ -98,7 +98,7 @@ export const validateStudentAge = (dob, className, isSpecialCase = false) => {
       message: isSpecialCase
         ? `Student is ${age} years old. Even with special case allowance, minimum age for ${className} is ${minAge}.`
         : `Student is ${age} years old. Minimum age for ${className} is ${rule.min}. Enable special case if this is intentional.`,
-    }
+    };
   }
 
   if (age > maxAge) {
@@ -108,7 +108,7 @@ export const validateStudentAge = (dob, className, isSpecialCase = false) => {
       message: isSpecialCase
         ? `Student is ${age} years old. Even with special case allowance, maximum age for ${className} is ${maxAge}.`
         : `Student is ${age} years old. Maximum age for ${className} is ${rule.max}. Enable special case if this is a late education situation.`,
-    }
+    };
   }
 
   return {
@@ -117,5 +117,5 @@ export const validateStudentAge = (dob, className, isSpecialCase = false) => {
     message: isSpecialCase
       ? `Age ${age} accepted under special case allowance for ${className}.`
       : `Age ${age} is within the normal range for ${className}.`,
-  }
-}
+  };
+};

@@ -5,7 +5,10 @@ import toast, { Toaster } from "react-hot-toast";
 import { MdAdd, MdDelete, MdEdit, MdSearch } from "react-icons/md";
 import { getCollection, deleteDocument } from "../../firebase/firestore";
 import { gradeColor, terms } from "../../utils/constant";
-import DeleteModal from '../../shared/components/DeleteModal'
+import DeleteModal from "../../shared/components/DeleteModal";
+import Pagination from "../../shared/components/Pagination";
+import usePagination from "../../hooks/usePagination";
+import { SkeletonTable } from "../../shared/components/Skeleton";
 
 // View modes
 const VIEWS = ["All", "By Student", "By Subject", "By Class"];
@@ -20,6 +23,21 @@ const Grades = () => {
   const [deletingId, setDeletingId] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ open: false, id: null });
   const navigate = useNavigate();
+
+  const {
+    currentPage,
+    totalPages,
+    paginatedData: paginatedGrades,
+    setCurrentPage,
+    resetPage,
+    totalItems,
+    itemsPerPage,
+  } = usePagination(filtered, 10);
+
+  // Reset page when search changes
+  useEffect(() => {
+    resetPage();
+  }, [search]);
 
   const fetchGrades = async () => {
     try {
@@ -52,32 +70,32 @@ const Grades = () => {
     setFiltered(results);
   }, [search, termFilter, grades]);
 
-const confirmDelete = (id) => {
-  setDeleteModal({ open: true, id })
-}
+  const confirmDelete = (id) => {
+    setDeleteModal({ open: true, id });
+  };
 
   // Actually deletes when user confirms in modal
-const handleDelete = async () => {
-  const id = deleteModal.id  // ← capture it first before anything async runs
+  const handleDelete = async () => {
+    const id = deleteModal.id; // ← capture it first before anything async runs
 
-  if (!id) {
-    toast.error('No record selected')
-    return
-  }
+    if (!id) {
+      toast.error("No record selected");
+      return;
+    }
 
-  setDeletingId(id)
-  try {
-    await deleteDocument('grades', id)  // ← use captured id
-    toast.success('Grade deleted')
-    setDeleteModal({ open: false, id: null })
-    fetchGrades()
-  } catch (error) {
-    console.error('Delete error:', error.code, error.message)
-    toast.error('Failed to delete grade')
-  } finally {
-    setDeletingId(null)
-  }
-}
+    setDeletingId(id);
+    try {
+      await deleteDocument("grades", id); // ← use captured id
+      toast.success("Grade deleted");
+      setDeleteModal({ open: false, id: null });
+      fetchGrades();
+    } catch (error) {
+      console.error("Delete error:", error.code, error.message);
+      toast.error("Failed to delete grade");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   // ── Group helpers ──────────────────────────────────────
 
@@ -288,9 +306,7 @@ const handleDelete = async () => {
 
       {/* Content */}
       {loading ? (
-        <div className="p-10 text-center text-gray-400 text-sm">
-          Loading grades...
-        </div>
+        <SkeletonTable rows={8} cols={7} />
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm p-10 text-center text-gray-400 text-sm">
           {search || termFilter
@@ -325,7 +341,7 @@ const handleDelete = async () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {filtered.map((g, index) => (
+                    {paginatedGrades.map((g, index) => (
                       <tr key={g.id} className="hover:bg-gray-50 transition">
                         <td className="px-6 py-4 text-gray-400">{index + 1}</td>
                         <td className="px-6 py-4">
@@ -387,6 +403,15 @@ const handleDelete = async () => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+              <div className="border-t border-gray-100">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                />
               </div>
             </motion.div>
           )}

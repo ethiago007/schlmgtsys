@@ -1,5 +1,5 @@
-import { NavLink } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { NavLink } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   MdDashboard,
   MdPeople,
@@ -8,17 +8,23 @@ import {
   MdGrade,
   MdAttachMoney,
   MdEventNote,
-} from 'react-icons/md'
+  MdMessage,
+} from "react-icons/md";
 
 const navItems = [
-  { label: 'Dashboard',  icon: <MdDashboard size={20} />,   path: '/admin' },
-  { label: 'Students',   icon: <MdPeople size={20} />,      path: '/admin/students' },
-  { label: 'Teachers',   icon: <MdSchool size={20} />,      path: '/admin/teachers' },
-  { label: 'Classes',    icon: <MdClass size={20} />,       path: '/admin/classes' },
-  { label: 'Grades',     icon: <MdGrade size={20} />,       path: '/admin/grades' },
-  { label: 'Attendance', icon: <MdEventNote size={20} />,   path: '/admin/attendance' },
-  { label: 'Fees',       icon: <MdAttachMoney size={20} />, path: '/admin/fees' },
-]
+  { label: "Dashboard", icon: <MdDashboard size={20} />, path: "/admin" },
+  { label: "Students", icon: <MdPeople size={20} />, path: "/admin/students" },
+  { label: "Teachers", icon: <MdSchool size={20} />, path: "/admin/teachers" },
+  { label: "Classes", icon: <MdClass size={20} />, path: "/admin/classes" },
+  { label: "Grades", icon: <MdGrade size={20} />, path: "/admin/grades" },
+  {
+    label: "Attendance",
+    icon: <MdEventNote size={20} />,
+    path: "/admin/attendance",
+  },
+  { label: "Fees", icon: <MdAttachMoney size={20} />, path: "/admin/fees" },
+  { label: "Messages", icon: <MdMessage size={20} />, path: "/admin/messages" },
+];
 
 const Sidebar = ({ isOpen }) => {
   return (
@@ -43,12 +49,13 @@ const Sidebar = ({ isOpen }) => {
               <NavLink
                 key={item.path}
                 to={item.path}
-                end={item.path === '/admin'}
+                end={item.path === "/admin"}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200
-                  ${isActive
-                    ? 'bg-blue-700 text-white'
-                    : 'text-blue-200 hover:bg-blue-800 hover:text-white'
+                  ${
+                    isActive
+                      ? "bg-blue-700 text-white"
+                      : "text-blue-200 hover:bg-blue-800 hover:text-white"
                   }`
                 }
               >
@@ -65,7 +72,7 @@ const Sidebar = ({ isOpen }) => {
         </motion.aside>
       )}
     </AnimatePresence>
-  )
-}
+  );
+};
 
-export default Sidebar
+export default Sidebar;

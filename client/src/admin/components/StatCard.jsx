@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { motion } from "framer-motion";
 
 const StatCard = ({ label, value, icon, color, delay = 0 }) => {
   return (
@@ -9,7 +9,9 @@ const StatCard = ({ label, value, icon, color, delay = 0 }) => {
       className="bg-white rounded-2xl shadow-sm p-6 flex items-center gap-5"
     >
       {/* Icon */}
-      <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-white text-2xl ${color}`}>
+      <div
+        className={`w-14 h-14 rounded-xl flex items-center justify-center text-white text-2xl ${color}`}
+      >
         {icon}
       </div>
 
@@ -21,7 +23,7 @@ const StatCard = ({ label, value, icon, color, delay = 0 }) => {
         </h3>
       </div>
     </motion.div>
-  )
-}
+  );
+};
 
-export default StatCard
+export default StatCard;

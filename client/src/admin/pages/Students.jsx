@@ -5,6 +5,9 @@ import toast, { Toaster } from "react-hot-toast";
 import { MdPersonAdd, MdDelete, MdSearch, MdEdit } from "react-icons/md";
 import { getCollection, deleteDocument } from "../../firebase/firestore";
 import DeleteModal from "../../shared/components/DeleteModal";
+import Pagination from "../../shared/components/Pagination";
+import usePagination from "../../hooks/usePagination";
+import { SkeletonTable } from "../../shared/components/Skeleton";
 
 const Students = () => {
   const [students, setStudents] = useState([]);
@@ -73,6 +76,21 @@ const Students = () => {
     }
   };
 
+  const {
+    currentPage,
+    totalPages,
+    paginatedData: paginatedStudents,
+    setCurrentPage,
+    resetPage,
+    totalItems,
+    itemsPerPage,
+  } = usePagination(filtered, 10);
+
+  // Reset page when search changes
+  useEffect(() => {
+    resetPage();
+  }, [search]);
+
   return (
     <div className="space-y-6">
       <Toaster position="top-right" />
@@ -117,9 +135,7 @@ const Students = () => {
         className="bg-white rounded-2xl shadow-sm overflow-hidden"
       >
         {loading ? (
-          <div className="p-10 text-center text-gray-400 text-sm">
-            Loading students...
-          </div>
+          <SkeletonTable rows={8} cols={7} />
         ) : filtered.length === 0 ? (
           <div className="p-10 text-center text-gray-400 text-sm">
             {search
@@ -142,7 +158,7 @@ const Students = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filtered.map((student, index) => (
+                {paginatedStudents.map((student, index) => (
                   <tr key={student.id} className="hover:bg-gray-50 transition">
                     {/* Index */}
                     <td className="px-6 py-4 text-gray-400">{index + 1}</td>
@@ -209,7 +225,17 @@ const Students = () => {
             </table>
           </div>
         )}
+        <div className="border-t border-gray-100">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+          />
+        </div>
       </motion.div>
+
       <DeleteModal
         isOpen={deleteModal.open}
         onClose={() => setDeleteModal({ open: false, id: null })}

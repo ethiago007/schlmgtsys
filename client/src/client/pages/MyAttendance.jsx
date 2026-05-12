@@ -1,78 +1,100 @@
-import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
-import { useAuth } from '../../context/AuthContext'
-import { getCollection } from '../../firebase/firestore'
-import { MdCheckCircle, MdCancel } from 'react-icons/md'
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { useAuth } from "../../context/AuthContext";
+import { getCollection } from "../../firebase/firestore";
+import { MdCheckCircle, MdCancel } from "react-icons/md";
+import {
+  SkeletonStatCard,
+  SkeletonCard,
+} from "../../shared/components/Skeleton";
+import { SkeletonTable } from "../../shared/components/Skeleton";
 
 const MyAttendance = () => {
-  const { student } = useAuth()
-  const [records, setRecords] = useState([])
-  const [summary, setSummary] = useState({ present: 0, absent: 0 })
-  const [loading, setLoading] = useState(true)
+  const { student } = useAuth();
+  const [records, setRecords] = useState([]);
+  const [summary, setSummary] = useState({ present: 0, absent: 0 });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!student) return
+    if (!student) return;
     const fetchData = async () => {
       try {
-        const allAttendance = await getCollection('attendance')
-        const myRecords     = []
-        let present = 0, absent = 0
+        const allAttendance = await getCollection("attendance");
+        const myRecords = [];
+        let present = 0,
+          absent = 0;
 
-        allAttendance.forEach(record => {
-          const myEntry = record.records?.find(r => r.studentId === student.id)
+        allAttendance.forEach((record) => {
+          const myEntry = record.records?.find(
+            (r) => r.studentId === student.id,
+          );
           if (myEntry) {
             myRecords.push({
-              date:   record.date,
-              class:  record.class,
+              date: record.date,
+              class: record.class,
               status: myEntry.status,
-            })
-            if (myEntry.status === 'present') present++
-            else absent++
+            });
+            if (myEntry.status === "present") present++;
+            else absent++;
           }
-        })
+        });
 
-        myRecords.sort((a, b) => new Date(b.date) - new Date(a.date))
-        setRecords(myRecords)
-        setSummary({ present, absent })
+        myRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+        setRecords(myRecords);
+        setSummary({ present, absent });
       } catch (error) {
-        console.error(error)
+        console.error(error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    fetchData()
-  }, [student])
+    };
+    fetchData();
+  }, [student]);
 
-  const total = summary.present + summary.absent
-  const rate  = total > 0 ? Math.round((summary.present / total) * 100) : 0
+  const total = summary.present + summary.absent;
+  const rate = total > 0 ? Math.round((summary.present / total) * 100) : 0;
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-gray-400 text-sm">Loading attendance...</p>
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+        <SkeletonTable rows={6} cols={5} />
       </div>
-    )
+    );
   }
 
   return (
     <div className="space-y-6">
-
       <div>
         <h2 className="text-2xl font-bold text-gray-800">My Attendance</h2>
-        <p className="text-sm text-gray-500 mt-1">Your daily attendance record</p>
+        <p className="text-sm text-gray-500 mt-1">
+          Your daily attendance record
+        </p>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           {
-            label: 'Attendance Rate',
+            label: "Attendance Rate",
             value: `${rate}%`,
-            color: rate >= 75 ? 'text-green-600' : 'text-red-500',
-            note:  rate < 75 ? 'Below 75% threshold' : null,
+            color: rate >= 75 ? "text-green-600" : "text-red-500",
+            note: rate < 75 ? "Below 75% threshold" : null,
           },
-          { label: 'Days Present', value: summary.present, color: 'text-green-600' },
-          { label: 'Days Absent',  value: summary.absent,  color: 'text-red-500' },
+          {
+            label: "Days Present",
+            value: summary.present,
+            color: "text-green-600",
+          },
+          {
+            label: "Days Absent",
+            value: summary.absent,
+            color: "text-red-500",
+          },
         ].map((card, i) => (
           <motion.div
             key={card.label}
@@ -82,8 +104,12 @@ const MyAttendance = () => {
             className="bg-white rounded-2xl shadow-sm p-5 text-center"
           >
             <p className="text-sm text-gray-400">{card.label}</p>
-            <p className={`text-3xl font-bold mt-1 ${card.color}`}>{card.value}</p>
-            {card.note && <p className="text-xs text-red-400 mt-1">{card.note}</p>}
+            <p className={`text-3xl font-bold mt-1 ${card.color}`}>
+              {card.value}
+            </p>
+            {card.note && (
+              <p className="text-xs text-red-400 mt-1">{card.note}</p>
+            )}
           </motion.div>
         ))}
       </div>
@@ -95,8 +121,12 @@ const MyAttendance = () => {
         className="bg-white rounded-2xl shadow-sm p-6"
       >
         <div className="flex items-center justify-between mb-2">
-          <p className="text-sm font-medium text-gray-700">Overall Attendance</p>
-          <p className={`text-sm font-bold ${rate >= 75 ? 'text-green-600' : 'text-red-500'}`}>
+          <p className="text-sm font-medium text-gray-700">
+            Overall Attendance
+          </p>
+          <p
+            className={`text-sm font-bold ${rate >= 75 ? "text-green-600" : "text-red-500"}`}
+          >
             {rate}%
           </p>
         </div>
@@ -105,7 +135,7 @@ const MyAttendance = () => {
             initial={{ width: 0 }}
             animate={{ width: `${rate}%` }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className={`h-full rounded-full ${rate >= 75 ? 'bg-green-500' : 'bg-red-500'}`}
+            className={`h-full rounded-full ${rate >= 75 ? "bg-green-500" : "bg-red-500"}`}
           />
         </div>
         <div className="flex justify-between mt-2">
@@ -143,17 +173,24 @@ const MyAttendance = () => {
                 {records.map((record, index) => (
                   <tr key={index} className="hover:bg-gray-50 transition">
                     <td className="px-6 py-4 text-gray-400">{index + 1}</td>
-                    <td className="px-6 py-4 font-medium text-gray-800">{record.date}</td>
+                    <td className="px-6 py-4 font-medium text-gray-800">
+                      {record.date}
+                    </td>
                     <td className="px-6 py-4 text-gray-600">{record.class}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        {record.status === 'present'
-                          ? <MdCheckCircle className="text-green-500" size={16} />
-                          : <MdCancel className="text-red-500" size={16} />
-                        }
-                        <span className={`text-xs font-semibold capitalize ${
-                          record.status === 'present' ? 'text-green-600' : 'text-red-500'
-                        }`}>
+                        {record.status === "present" ? (
+                          <MdCheckCircle className="text-green-500" size={16} />
+                        ) : (
+                          <MdCancel className="text-red-500" size={16} />
+                        )}
+                        <span
+                          className={`text-xs font-semibold capitalize ${
+                            record.status === "present"
+                              ? "text-green-600"
+                              : "text-red-500"
+                          }`}
+                        >
                           {record.status}
                         </span>
                       </div>
@@ -166,7 +203,7 @@ const MyAttendance = () => {
         )}
       </motion.div>
     </div>
-  )
-}
+  );
+};
 
-export default MyAttendance
+export default MyAttendance;

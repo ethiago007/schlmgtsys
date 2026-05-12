@@ -33,6 +33,9 @@ import TeacherGrades from "./teacher/pages/TeacherGrades";
 import AddTeacherGrade from "./teacher/pages/AddTeacherGrade";
 import TeacherAttendance from "./teacher/pages/TeacherAttendance";
 import TeacherProfile from "./teacher/pages/TeacherProfile";
+import AdminMessages from "./admin/pages/Messages";
+import StudentMessages from "./client/pages/Messages";
+import TeacherMessages from "./teacher/pages/TeacherMessages";
 
 function App() {
   return (
@@ -67,6 +70,7 @@ function App() {
           <Route path="fees" element={<Fees />} />
           <Route path="fees/add" element={<AddFee />} />
           <Route path="fees/edit/:id" element={<EditFee />} />
+          <Route path="messages" element={<AdminMessages />} />
         </Route>
 
         <Route
@@ -82,6 +86,7 @@ function App() {
           <Route path="attendance" element={<MyAttendance />} />
           <Route path="fees" element={<MyFees />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="messages" element={<StudentMessages />} />
         </Route>
 
         <Route
@@ -98,6 +103,7 @@ function App() {
           <Route path="grades/add" element={<AddTeacherGrade />} />
           <Route path="attendance" element={<TeacherAttendance />} />
           <Route path="profile" element={<TeacherProfile />} />
+          <Route path="messages" element={<TeacherMessages />} />
         </Route>
       </Routes>
     </BrowserRouter>

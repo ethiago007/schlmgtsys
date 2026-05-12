@@ -1,7 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import toast, { Toaster } from 'react-hot-toast'
-import { MdCheckCircle, MdCancel, MdCalendarToday, MdDelete, MdEdit } from 'react-icons/md'
+import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import toast, { Toaster } from "react-hot-toast";
+import {
+  MdCheckCircle,
+  MdCancel,
+  MdCalendarToday,
+  MdDelete,
+  MdEdit,
+} from "react-icons/md";
 import {
   getStudentsByClass,
   addDocument,
@@ -9,142 +15,162 @@ import {
   deleteDocument,
   getAttendanceByClassAndDate,
   getAttendanceByClass,
-} from '../../firebase/firestore'
-import { useAuth } from '../../context/AuthContext'
-import DeleteModal from '../../shared/components/DeleteModal'
+} from "../../firebase/firestore";
+import { useAuth } from "../../context/AuthContext";
+import DeleteModal from "../../shared/components/DeleteModal";
+import {
+  SkeletonStatCard,
+  SkeletonCard,
+} from "../../shared/components/Skeleton";
+import { SkeletonTable } from "../../shared/components/Skeleton";
 
 const TeacherAttendance = () => {
-  const { teacher }   = useAuth()
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
-  const [students, setStudents]         = useState([])
-  const [attendance, setAttendance]     = useState({})
-  const [existingRecord, setExistingRecord] = useState(null)
-  const [loadingStudents, setLoadingStudents] = useState(false)
-  const [saving, setSaving]             = useState(false)
-  const [history, setHistory]           = useState([])
-  const [loadingHistory, setLoadingHistory] = useState(false)
-  const [deletingId, setDeletingId]     = useState(null)
-  const [deleteModal, setDeleteModal]   = useState({ open: false, id: null })
-  const deleteIdRef                     = useRef(null)
+  const { teacher } = useAuth();
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0],
+  );
+  const [students, setStudents] = useState([]);
+  const [attendance, setAttendance] = useState({});
+  const [existingRecord, setExistingRecord] = useState(null);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+  const [deleteModal, setDeleteModal] = useState({ open: false, id: null });
+  const deleteIdRef = useRef(null);
 
   const loadStudents = async () => {
-    if (!teacher?.class || !selectedDate) return
-    setLoadingStudents(true)
+    if (!teacher?.class || !selectedDate) return;
+    setLoadingStudents(true);
     try {
-      const classStudents = await getStudentsByClass(teacher.class)
-      setStudents(classStudents)
+      const classStudents = await getStudentsByClass(teacher.class);
+      setStudents(classStudents);
 
-      const existing = await getAttendanceByClassAndDate(teacher.class, selectedDate)
+      const existing = await getAttendanceByClassAndDate(
+        teacher.class,
+        selectedDate,
+      );
       if (existing) {
-        setExistingRecord(existing)
-        const map = {}
-        existing.records.forEach(r => { map[r.studentId] = r.status })
-        setAttendance(map)
-        toast('Attendance already recorded — you can edit it.', { icon: 'ℹ️' })
+        setExistingRecord(existing);
+        const map = {};
+        existing.records.forEach((r) => {
+          map[r.studentId] = r.status;
+        });
+        setAttendance(map);
+        toast("Attendance already recorded — you can edit it.", { icon: "ℹ️" });
       } else {
-        setExistingRecord(null)
-        const defaultMap = {}
-        classStudents.forEach(s => { defaultMap[s.id] = 'present' })
-        setAttendance(defaultMap)
+        setExistingRecord(null);
+        const defaultMap = {};
+        classStudents.forEach((s) => {
+          defaultMap[s.id] = "present";
+        });
+        setAttendance(defaultMap);
       }
-      loadHistory()
+      loadHistory();
     } catch (error) {
-      toast.error('Failed to load students')
+      toast.error("Failed to load students");
     } finally {
-      setLoadingStudents(false)
+      setLoadingStudents(false);
     }
-  }
+  };
 
   const loadHistory = async () => {
-    if (!teacher?.class) return
-    setLoadingHistory(true)
+    if (!teacher?.class) return;
+    setLoadingHistory(true);
     try {
-      const records = await getAttendanceByClass(teacher.class)
-      setHistory(records)
+      const records = await getAttendanceByClass(teacher.class);
+      setHistory(records);
     } catch (error) {
-      console.error(error)
+      console.error(error);
     } finally {
-      setLoadingHistory(false)
+      setLoadingHistory(false);
     }
-  }
+  };
 
   const toggleStatus = (studentId) => {
-    setAttendance(prev => ({
+    setAttendance((prev) => ({
       ...prev,
-      [studentId]: prev[studentId] === 'present' ? 'absent' : 'present',
-    }))
-  }
+      [studentId]: prev[studentId] === "present" ? "absent" : "present",
+    }));
+  };
 
   const saveAttendance = async () => {
-    if (students.length === 0) return toast.error('No students loaded')
-    setSaving(true)
+    if (students.length === 0) return toast.error("No students loaded");
+    setSaving(true);
     try {
-      const records = students.map(s => ({
-        studentId:   s.id,
+      const records = students.map((s) => ({
+        studentId: s.id,
         studentName: `${s.firstName} ${s.lastName}`,
-        status:      attendance[s.id] || 'absent',
-      }))
+        status: attendance[s.id] || "absent",
+      }));
 
-      const presentCount = records.filter(r => r.status === 'present').length
+      const presentCount = records.filter((r) => r.status === "present").length;
       const payload = {
-        class:         teacher.class,
-        date:          selectedDate,
+        class: teacher.class,
+        date: selectedDate,
         records,
         presentCount,
-        absentCount:   students.length - presentCount,
+        absentCount: students.length - presentCount,
         totalStudents: students.length,
-        markedBy:      `${teacher.firstName} ${teacher.lastName}`,
-      }
+        markedBy: `${teacher.firstName} ${teacher.lastName}`,
+      };
 
       if (existingRecord) {
-        await updateDocument('attendance', existingRecord.id, payload)
-        toast.success('Attendance updated!')
+        await updateDocument("attendance", existingRecord.id, payload);
+        toast.success("Attendance updated!");
       } else {
-        await addDocument('attendance', payload)
-        toast.success('Attendance saved!')
+        await addDocument("attendance", payload);
+        toast.success("Attendance saved!");
       }
-      loadHistory()
+      loadHistory();
     } catch (error) {
-      toast.error('Failed to save attendance')
+      toast.error("Failed to save attendance");
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   const confirmDelete = (id) => {
-    deleteIdRef.current = id
-    setDeleteModal({ open: true, id })
-  }
+    deleteIdRef.current = id;
+    setDeleteModal({ open: true, id });
+  };
 
   const handleDelete = async () => {
-    const id = deleteIdRef.current
-    if (!id) return
-    setDeletingId(id)
+    const id = deleteIdRef.current;
+    if (!id) return;
+    setDeletingId(id);
     try {
-      await deleteDocument('attendance', id)
-      toast.success('Record deleted')
-      setDeleteModal({ open: false, id: null })
-      deleteIdRef.current = null
-      loadHistory()
+      await deleteDocument("attendance", id);
+      toast.success("Record deleted");
+      setDeleteModal({ open: false, id: null });
+      deleteIdRef.current = null;
+      loadHistory();
     } catch (error) {
-      toast.error('Failed to delete')
+      toast.error("Failed to delete");
     } finally {
-      setDeletingId(null)
+      setDeletingId(null);
     }
-  }
+  };
 
   const handleEdit = (record) => {
-    setSelectedDate(record.date)
-    setExistingRecord(record)
-    const map = {}
-    record.records.forEach(r => { map[r.studentId] = r.status })
-    setAttendance(map)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-    toast('Record loaded — make changes and save.', { icon: '✏️' })
-  }
+    setSelectedDate(record.date);
+    setExistingRecord(record);
+    const map = {};
+    record.records.forEach((r) => {
+      map[r.studentId] = r.status;
+    });
+    setAttendance(map);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    toast("Record loaded — make changes and save.", { icon: "✏️" });
+  };
 
-  const presentCount = Object.values(attendance).filter(s => s === 'present').length
-  const absentCount  = Object.values(attendance).filter(s => s === 'absent').length
+  const presentCount = Object.values(attendance).filter(
+    (s) => s === "present",
+  ).length;
+  const absentCount = Object.values(attendance).filter(
+    (s) => s === "absent",
+  ).length;
 
   return (
     <div className="space-y-8">
@@ -153,7 +179,8 @@ const TeacherAttendance = () => {
       <div>
         <h2 className="text-2xl font-bold text-gray-800">Attendance</h2>
         <p className="text-sm text-gray-500 mt-1">
-          Class: <span className="font-semibold text-green-600">{teacher?.class}</span>
+          Class:{" "}
+          <span className="font-semibold text-green-600">{teacher?.class}</span>
         </p>
       </div>
 
@@ -181,15 +208,17 @@ const TeacherAttendance = () => {
             disabled={!selectedDate || loadingStudents}
             className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition disabled:opacity-50"
           >
-            {loadingStudents ? 'Loading...' : 'Load Students'}
+            {loadingStudents ? "Loading..." : "Load Students"}
           </button>
           {students.length > 0 && (
             <>
               <button
                 onClick={() => {
-                  const all = {}
-                  students.forEach(s => { all[s.id] = 'present' })
-                  setAttendance(all)
+                  const all = {};
+                  students.forEach((s) => {
+                    all[s.id] = "present";
+                  });
+                  setAttendance(all);
                 }}
                 className="border border-green-400 text-green-600 hover:bg-green-50 px-4 py-2.5 rounded-lg text-sm font-medium transition"
               >
@@ -197,9 +226,11 @@ const TeacherAttendance = () => {
               </button>
               <button
                 onClick={() => {
-                  const all = {}
-                  students.forEach(s => { all[s.id] = 'absent' })
-                  setAttendance(all)
+                  const all = {};
+                  students.forEach((s) => {
+                    all[s.id] = "absent";
+                  });
+                  setAttendance(all);
                 }}
                 className="border border-red-400 text-red-600 hover:bg-red-50 px-4 py-2.5 rounded-lg text-sm font-medium transition"
               >
@@ -230,7 +261,7 @@ const TeacherAttendance = () => {
               {/* Students */}
               <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden">
                 {students.map((student, index) => {
-                  const isPresent = attendance[student.id] === 'present'
+                  const isPresent = attendance[student.id] === "present";
                   return (
                     <motion.div
                       key={student.id}
@@ -238,14 +269,19 @@ const TeacherAttendance = () => {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.03 }}
                       className={`flex items-center justify-between px-5 py-4 transition ${
-                        isPresent ? 'bg-white' : 'bg-red-50'
+                        isPresent ? "bg-white" : "bg-red-50"
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full text-xs font-bold flex items-center justify-center ${
-                          isPresent ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-500'
-                        }`}>
-                          {student.firstName?.charAt(0)}{student.lastName?.charAt(0)}
+                        <div
+                          className={`w-8 h-8 rounded-full text-xs font-bold flex items-center justify-center ${
+                            isPresent
+                              ? "bg-blue-100 text-blue-600"
+                              : "bg-red-100 text-red-500"
+                          }`}
+                        >
+                          {student.firstName?.charAt(0)}
+                          {student.lastName?.charAt(0)}
                         </div>
                         <p className="text-sm font-medium text-gray-800">
                           {student.firstName} {student.lastName}
@@ -255,17 +291,22 @@ const TeacherAttendance = () => {
                         onClick={() => toggleStatus(student.id)}
                         className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition ${
                           isPresent
-                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                            : 'bg-red-100 text-red-600 hover:bg-red-200'
+                            ? "bg-green-100 text-green-700 hover:bg-green-200"
+                            : "bg-red-100 text-red-600 hover:bg-red-200"
                         }`}
                       >
-                        {isPresent
-                          ? <><MdCheckCircle size={14} /> Present</>
-                          : <><MdCancel size={14} /> Absent</>
-                        }
+                        {isPresent ? (
+                          <>
+                            <MdCheckCircle size={14} /> Present
+                          </>
+                        ) : (
+                          <>
+                            <MdCancel size={14} /> Absent
+                          </>
+                        )}
                       </button>
                     </motion.div>
-                  )
+                  );
                 })}
               </div>
 
@@ -274,7 +315,11 @@ const TeacherAttendance = () => {
                 disabled={saving}
                 className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl text-sm font-semibold transition disabled:opacity-60"
               >
-                {saving ? 'Saving...' : existingRecord ? 'Update Attendance' : 'Save Attendance'}
+                {saving
+                  ? "Saving..."
+                  : existingRecord
+                    ? "Update Attendance"
+                    : "Save Attendance"}
               </button>
             </motion.div>
           )}
@@ -296,9 +341,18 @@ const TeacherAttendance = () => {
       >
         <h3 className="font-semibold text-gray-800">Attendance History</h3>
         {loadingHistory ? (
-          <p className="text-sm text-gray-400 text-center py-4">Loading...</p>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <SkeletonCard key={i} />
+              ))}
+            </div>
+            <SkeletonTable rows={6} cols={5} />
+          </div>
         ) : history.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-4">No records yet</p>
+          <p className="text-sm text-gray-400 text-center py-4">
+            No records yet
+          </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -313,26 +367,44 @@ const TeacherAttendance = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {history.map(record => {
-                  const rate = Math.round((record.presentCount / record.totalStudents) * 100)
+                {history.map((record) => {
+                  const rate = Math.round(
+                    (record.presentCount / record.totalStudents) * 100,
+                  );
                   return (
                     <tr key={record.id} className="hover:bg-gray-50 transition">
-                      <td className="px-5 py-4 font-medium text-gray-800">{record.date}</td>
-                      <td className="px-5 py-4 text-gray-600">{record.totalStudents}</td>
-                      <td className="px-5 py-4 text-green-600 font-semibold">{record.presentCount}</td>
-                      <td className="px-5 py-4 text-red-500 font-semibold">{record.absentCount}</td>
+                      <td className="px-5 py-4 font-medium text-gray-800">
+                        {record.date}
+                      </td>
+                      <td className="px-5 py-4 text-gray-600">
+                        {record.totalStudents}
+                      </td>
+                      <td className="px-5 py-4 text-green-600 font-semibold">
+                        {record.presentCount}
+                      </td>
+                      <td className="px-5 py-4 text-red-500 font-semibold">
+                        {record.absentCount}
+                      </td>
                       <td className="px-5 py-4">
-                        <span className={`text-xs font-semibold ${rate >= 80 ? 'text-green-600' : rate >= 60 ? 'text-yellow-600' : 'text-red-500'}`}>
+                        <span
+                          className={`text-xs font-semibold ${rate >= 80 ? "text-green-600" : rate >= 60 ? "text-yellow-600" : "text-red-500"}`}
+                        >
                           {rate}%
                         </span>
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <button onClick={() => handleEdit(record)} className="text-blue-400 hover:text-blue-600 transition">
+                          <button
+                            onClick={() => handleEdit(record)}
+                            className="text-blue-400 hover:text-blue-600 transition"
+                          >
                             <MdEdit size={18} />
                           </button>
                           <button
-                            onClick={(e) => { e.stopPropagation(); confirmDelete(record.id) }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              confirmDelete(record.id);
+                            }}
                             className="text-red-400 hover:text-red-600 transition"
                           >
                             <MdDelete size={18} />
@@ -340,7 +412,7 @@ const TeacherAttendance = () => {
                         </div>
                       </td>
                     </tr>
-                  )
+                  );
                 })}
               </tbody>
             </table>
@@ -357,7 +429,7 @@ const TeacherAttendance = () => {
         message="This will permanently remove this record."
       />
     </div>
-  )
-}
+  );
+};
 
-export default TeacherAttendance
+export default TeacherAttendance;

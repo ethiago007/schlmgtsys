@@ -4,7 +4,10 @@ import { motion } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
 import { MdPersonAdd, MdDelete, MdSearch, MdEdit } from "react-icons/md";
 import { getCollection, deleteDocument } from "../../firebase/firestore";
-import DeleteModal from '../../shared/components/DeleteModal'
+import DeleteModal from "../../shared/components/DeleteModal";
+import Pagination from "../../shared/components/Pagination";
+import usePagination from "../../hooks/usePagination";
+import { SkeletonTable } from "../../shared/components/Skeleton";
 
 const Teachers = () => {
   const [teachers, setTeachers] = useState([]);
@@ -43,32 +46,47 @@ const Teachers = () => {
     setFiltered(results);
   }, [search, teachers]);
 
-const confirmDelete = (id) => {
-  setDeleteModal({ open: true, id })
-}
+  const confirmDelete = (id) => {
+    setDeleteModal({ open: true, id });
+  };
 
   // Actually deletes when user confirms in modal
-const handleDelete = async () => {
-  const id = deleteModal.id  // ← capture it first before anything async runs
+  const handleDelete = async () => {
+    const id = deleteModal.id; // ← capture it first before anything async runs
 
-  if (!id) {
-    toast.error('No record selected')
-    return
-  }
+    if (!id) {
+      toast.error("No record selected");
+      return;
+    }
 
-  setDeletingId(id)
-  try {
-    await deleteDocument('teachers', id)  // ← use captured id
-    toast.success('Teacher deleted')
-    setDeleteModal({ open: false, id: null })
-    fetchTeachers()
-  } catch (error) {
-    console.error('Delete error:', error.code, error.message)
-    toast.error('Failed to delete teacher')
-  } finally {
-    setDeletingId(null)
-  }
-}
+    setDeletingId(id);
+    try {
+      await deleteDocument("teachers", id); // ← use captured id
+      toast.success("Teacher deleted");
+      setDeleteModal({ open: false, id: null });
+      fetchTeachers();
+    } catch (error) {
+      console.error("Delete error:", error.code, error.message);
+      toast.error("Failed to delete teacher");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const {
+    currentPage,
+    totalPages,
+    paginatedData: paginatedTeachers,
+    setCurrentPage,
+    resetPage,
+    totalItems,
+    itemsPerPage,
+  } = usePagination(filtered, 10);
+
+  // Reset page when search changes
+  useEffect(() => {
+    resetPage();
+  }, [search]);
 
   return (
     <div className="space-y-6">
@@ -114,9 +132,7 @@ const handleDelete = async () => {
         className="bg-white rounded-2xl shadow-sm overflow-hidden"
       >
         {loading ? (
-          <div className="p-10 text-center text-gray-400 text-sm">
-            Loading teachers...
-          </div>
+          <SkeletonTable rows={8} cols={10} />
         ) : filtered.length === 0 ? (
           <div className="p-10 text-center text-gray-400 text-sm">
             {search
@@ -135,12 +151,13 @@ const handleDelete = async () => {
                   <th className="px-6 py-4 text-left">Email</th>
                   <th className="px-6 py-4 text-left">Phone</th>
                   <th className="px-6 py-4 text-left">Qualification</th>
+                  <th className="px-6 py-4 text-left">Class</th>
                   <th className="px-6 py-4 text-left">Status</th>
                   <th className="px-6 py-4 text-left">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filtered.map((teacher, index) => (
+                {paginatedTeachers.map((teacher, index) => (
                   <tr key={teacher.id} className="hover:bg-gray-50 transition">
                     <td className="px-6 py-4 text-gray-400">{index + 1}</td>
 
@@ -167,6 +184,10 @@ const handleDelete = async () => {
                     <td className="px-6 py-4 text-gray-600">{teacher.phone}</td>
                     <td className="px-6 py-4 text-gray-600">
                       {teacher.qualification}
+                    </td>
+
+                    <td className="px-6 py-4 text-gray-600">
+                      {teacher.class || "—"}
                     </td>
 
                     <td className="px-6 py-4">
@@ -200,6 +221,15 @@ const handleDelete = async () => {
             </table>
           </div>
         )}
+        <div className="border-t border-gray-100">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+          />
+        </div>
       </motion.div>
       <DeleteModal
         isOpen={deleteModal.open}

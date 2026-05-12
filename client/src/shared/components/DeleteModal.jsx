@@ -1,7 +1,14 @@
-import { motion, AnimatePresence } from 'framer-motion'
-import { MdWarning } from 'react-icons/md'
+import { motion, AnimatePresence } from "framer-motion";
+import { MdWarning } from "react-icons/md";
 
-const DeleteModal = ({ isOpen, onClose, onConfirm, loading, title, message }) => {
+const DeleteModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  loading,
+  title,
+  message,
+}) => {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -24,7 +31,6 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, loading, title, message }) =>
             className="fixed z-50 inset-0 flex items-center justify-center px-4"
           >
             <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
-
               {/* Icon */}
               <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
                 <MdWarning size={24} className="text-red-500" />
@@ -32,10 +38,10 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, loading, title, message }) =>
 
               {/* Text */}
               <h3 className="text-lg font-bold text-gray-800 text-center">
-                {title || 'Delete this record?'}
+                {title || "Delete this record?"}
               </h3>
               <p className="text-sm text-gray-500 text-center mt-2">
-                {message || 'This action cannot be undone.'}
+                {message || "This action cannot be undone."}
               </p>
 
               {/* Buttons */}
@@ -52,16 +58,15 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, loading, title, message }) =>
                   disabled={loading}
                   className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-lg text-sm font-medium transition disabled:opacity-60"
                 >
-                  {loading ? 'Deleting...' : 'Yes, Delete'}
+                  {loading ? "Deleting..." : "Yes, Delete"}
                 </button>
               </div>
-
             </div>
           </motion.div>
         </>
       )}
     </AnimatePresence>
-  )
-}
+  );
+};
 
-export default DeleteModal
+export default DeleteModal;
